@@ -1,54 +1,41 @@
 package com.example
 
 import com.mongodb.client.*
-import com.auth0.jwt.JWT
-import com.auth0.jwt.algorithms.Algorithm
 import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
-import io.ktor.server.auth.*
-import io.ktor.server.auth.jwt.*
-import io.ktor.server.config.*
-import io.ktor.server.plugins.contentnegotiation.*
-import io.ktor.server.plugins.hsts.*
-import io.ktor.server.plugins.openapi.*
-import io.ktor.server.plugins.requestvalidation.RequestValidation
-import io.ktor.server.plugins.requestvalidation.ValidationResult
-import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import org.jetbrains.exposed.sql.*
 
 fun Application.configureMongoDatabases() {
     val mongoDatabase = connectToMongoDB()
-    val carService = CarService(mongoDatabase)
+    val todoService = TodoService(mongoDatabase)
     routing {
-        // Create car
-        post("/cars") {
-            val car = call.receive<Car>()
-            val id = carService.create(car)
+        // Create todo
+        post("/todos") {
+            val todo = call.receive<Todo>()
+            val id = todoService.create(todo)
             call.respond(HttpStatusCode.Created, id)
         }
-        // Read car
-        get("/cars/{id}") {
+        // Read todo
+        get("/todos/{id}") {
             val id = call.parameters["id"] ?: throw IllegalArgumentException("No ID found")
-            carService.read(id)?.let { car ->
-                call.respond(car)
+            todoService.read(id)?.let { todo ->
+                call.respond(todo)
             } ?: call.respond(HttpStatusCode.NotFound)
         }
-        // Update car
-        put("/cars/{id}") {
+        // Update todo
+        put("/todos/{id}") {
             val id = call.parameters["id"] ?: throw IllegalArgumentException("No ID found")
-            val car = call.receive<Car>()
-            carService.update(id, car)?.let {
+            val todo = call.receive<Todo>()
+            todoService.update(id, todo)?.let {
                 call.respond(HttpStatusCode.OK)
             } ?: call.respond(HttpStatusCode.NotFound)
         }
-        // Delete car
-        delete("/cars/{id}") {
+        // Delete todo
+        delete("/todos/{id}") {
             val id = call.parameters["id"] ?: throw IllegalArgumentException("No ID found")
-            carService.delete(id)?.let {
+            todoService.delete(id)?.let {
                 call.respond(HttpStatusCode.OK)
             } ?: call.respond(HttpStatusCode.NotFound)
         }
@@ -72,16 +59,15 @@ fun Application.configureMongoDatabases() {
  * @returns [MongoDatabase] instance
  * */
 fun Application.connectToMongoDB(): MongoDatabase {
-    val user = environment.config.tryGetString("db.mongo.user")
-    val password = environment.config.tryGetString("db.mongo.password")
-    val host = environment.config.tryGetString("db.mongo.host") ?: "127.0.0.1"
-    val port = environment.config.tryGetString("db.mongo.port") ?: "27017"
-    val maxPoolSize = environment.config.tryGetString("db.mongo.maxPoolSize")?.toInt() ?: 20
-    val databaseName = environment.config.tryGetString("db.mongo.database.name") ?: "myDatabase"
+    //val user = environment.config.tryGetString("db.mongo.user")
+    //val password = environment.config.tryGetString("db.mongo.password")
+    //val host = environment.config.tryGetString("db.mongo.host") ?: "127.0.0.1"
+    //val port = environment.config.tryGetString("db.mongo.port") ?: "27017"
+   // val maxPoolSize = environment.config.tryGetString("db.mongo.maxPoolSize")?.toInt() ?: 20
+        val databaseName = "myDatabase"
 
-    val credentials = user?.let { userVal -> password?.let { passwordVal -> "$userVal:$passwordVal@" } }.orEmpty()
-    val uri = "mongodb://$credentials$host:$port/?maxPoolSize=$maxPoolSize&w=majority"
-
+    //val credentials = user?.let { userVal -> password?.let { passwordVal -> "$userVal:$passwordVal@" } }.orEmpty()
+    val uri = "mongodb://localhost:27017/"
     val mongoClient = MongoClients.create(uri)
     val database = mongoClient.getDatabase(databaseName)
 

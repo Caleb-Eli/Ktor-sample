@@ -11,5 +11,5 @@ jwt:
 
 db:
   mongo:
-    user:
-    password:
+    user: ""
+    password: ""
