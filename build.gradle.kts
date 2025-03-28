@@ -48,4 +48,6 @@ dependencies {
     // https://mvnrepository.com/artifact/org.mongodb/mongodb-driver-sync
     implementation("org.mongodb:mongodb-driver-sync:5.3.1")
 
+    implementation("org.mindrot:jbcrypt:0.4")
+
 }

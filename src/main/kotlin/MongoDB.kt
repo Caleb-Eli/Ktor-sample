@@ -1,8 +1,14 @@
 package com.example
 
+import com.example.models.Todo
+import com.example.routes.authRoutes
+import com.example.routes.todoRoutes
+import com.example.services.TodoService
+import com.example.services.UserService
 import com.mongodb.client.*
 import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.auth.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -10,35 +16,10 @@ import io.ktor.server.routing.*
 fun Application.configureMongoDatabases() {
     val mongoDatabase = connectToMongoDB()
     val todoService = TodoService(mongoDatabase)
+    val userService = UserService(mongoDatabase)
     routing {
-        // Create todo
-        post("/todos") {
-            val todo = call.receive<Todo>()
-            val id = todoService.create(todo)
-            call.respond(HttpStatusCode.Created, id)
-        }
-        // Read todo
-        get("/todos/{id}") {
-            val id = call.parameters["id"] ?: throw IllegalArgumentException("No ID found")
-            todoService.read(id)?.let { todo ->
-                call.respond(todo)
-            } ?: call.respond(HttpStatusCode.NotFound)
-        }
-        // Update todo
-        put("/todos/{id}") {
-            val id = call.parameters["id"] ?: throw IllegalArgumentException("No ID found")
-            val todo = call.receive<Todo>()
-            todoService.update(id, todo)?.let {
-                call.respond(HttpStatusCode.OK)
-            } ?: call.respond(HttpStatusCode.NotFound)
-        }
-        // Delete todo
-        delete("/todos/{id}") {
-            val id = call.parameters["id"] ?: throw IllegalArgumentException("No ID found")
-            todoService.delete(id)?.let {
-                call.respond(HttpStatusCode.OK)
-            } ?: call.respond(HttpStatusCode.NotFound)
-        }
+        authRoutes(userService)
+        todoRoutes(todoService)
     }
 }
 /**

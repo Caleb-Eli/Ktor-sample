@@ -19,23 +19,28 @@ import io.ktor.server.routing.*
 import org.jetbrains.exposed.sql.*
 
 fun Application.configureSecurity() {
-    // Please read the jwt property from the config file if you are using EngineMain
-    val jwtAudience = "jwt-audience"
-    val jwtDomain = "https://jwt-provider-domain/"
-    val jwtRealm = "ktor sample app"
-    val jwtSecret = "secret"
-    authentication {
-        jwt {
+    val jwtAudience = environment.config.property("jwt.audience").getString()
+    val jwtIssuer = environment.config.property("jwt.issuer").getString()
+    val jwtSecret = environment.config.property("jwt.secret").getString()
+    val jwtRealm = environment.config.property("jwt.realm").getString()
+    install(Authentication) {
+        jwt("auth-jwt") {
             realm = jwtRealm
             verifier(
                 JWT
                     .require(Algorithm.HMAC256(jwtSecret))
                     .withAudience(jwtAudience)
-                    .withIssuer(jwtDomain)
-                    .build()
-            )
+                    .withIssuer(jwtIssuer)
+                    .build()            )
             validate { credential ->
-                if (credential.payload.audience.contains(jwtAudience)) JWTPrincipal(credential.payload) else null
+                if (credential.payload.getClaim("userId").asString() != "") {
+                    JWTPrincipal(credential.payload)
+                } else {
+                    null
+                }
+            }
+            challenge { defaultScheme, realm ->
+                call.respond(HttpStatusCode.Unauthorized, "Token is not valid or has expired")
             }
         }
     }
